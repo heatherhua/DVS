@@ -37,14 +37,14 @@
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="/usr/local/Cellar/opencv/2.4.12/share/OpenCV/java"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/Users/heatherhua/Documents/ucsd_cse/dvs/dependencies/ImShow-Java-OpenCV/Imshow.jar">
+	<classpathentry kind="lib" path="/Users/heatherhua/Documents/ucsd_cse/dvs/DVS/dependencies/lombok.jar">
 		<attributes>
-			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="/Users/heatherhua/Documents/ucsd_cse/dvs/dependencies/ImShow-Java-OpenCV"/>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="/Users/heatherhua/Documents/ucsd_cse/dvs/DVS/dependencies"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/Users/heatherhua/Documents/ucsd_cse/dvs/dependencies/lombok.jar">
+	<classpathentry kind="lib" path="/Users/heatherhua/Documents/ucsd_cse/dvs/DVS/dependencies/ImShow-Java-OpenCV/Imshow.jar">
 		<attributes>
-			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="/Users/heatherhua/Documents/ucsd_cse/dvs/dependencies"/>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="/Users/heatherhua/Documents/ucsd_cse/dvs/DVS/dependencies/ImShow-Java-OpenCV"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="output" path="target/classes"/>
