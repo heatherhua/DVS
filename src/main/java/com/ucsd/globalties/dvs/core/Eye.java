@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
@@ -13,6 +14,8 @@ import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.highgui.Highgui;
 import org.opencv.imgproc.Imgproc;
+
+import com.atul.JavaOpenCV.Imshow;
 
 /**
  * The Eye class represents a portion of the picture containing the eye.
@@ -73,6 +76,7 @@ public class Eye {
     //Imgproc.equalizeHist(gray,gray);
     //smooth out image to prevent false circles
     Imgproc.GaussianBlur(gray, gray, new Size(9,9), 2.0, 2.0);
+    
     //Finds circles
     //See http://docs.opencv.org/trunk/modules/imgproc/doc/feature_detection.html?highlight=cvhoughcircles#houghcircles
     //for parameter information
@@ -84,14 +88,14 @@ public class Eye {
     }
     
     //iterate over all circles and output circles/rects for debugging
-    /*for(int i = 0; i < circles.total(); i++ )
-    {
-      //circle info is stored as [x,y,radius] with [x,y] forming the center of the circle
+    //for(int i = 0; i < circles.total(); i++ )
+    //{
+    //  circle info is stored as [x,y,radius] with [x,y] forming the center of the circle
       //double[] circle = circles.get(0, i); 
       //log.info("x: " + circle[0] + " y: " + circle[1] + " r: " + circle[2]);
-      //Core.rectangle(src, new Point(circle[0],circle[1]), new Point(circle[0]+2*circle[2],circle[1]+2*circle[2]), new Scalar(0,255,0),2);
+    //  Core.rectangle(src, new Point(circle[0],circle[1]), new Point(circle[0]+2*circle[2],circle[1]+2*circle[2]), new Scalar(0,255,0),2);
       //Core.circle(src, new Point(circle[0], circle[1]), (int) circle[2], new Scalar(255,0,0),2);
-    }*/
+    //}
     //Highgui.imwrite(""+code+"_pupil_src.jpg", src);
     
     //pick the most center circle as Pupil. HoughCircles returns circles in decreasing order from center
@@ -99,11 +103,35 @@ public class Eye {
     double[] finalPupil = circles.get(0, 0);
     
     // Use the following code to debug where the detected pupil is in the image
-    /*Mat fsrc = new Mat();
-    mat.copyTo(fsrc);    
-    Core.rectangle(fsrc, new Point(finalPupil[0],finalPupil[1]), new Point(finalPupil[0]+2*finalPupil[2],finalPupil[1]+2*finalPupil[2]), new Scalar(0,255,0),2);
-    Core.circle(fsrc, new Point(finalPupil[0], finalPupil[1]), (int) finalPupil[2], new Scalar(255,0,0),2);
-    Highgui.imwrite("detected-pupil.jpg", fsrc);*/
+//    Mat fsrc = new Mat();
+//    mat.copyTo(fsrc);    
+    Mat fsrc = Mat.zeros(mat.rows(), mat.cols(), CvType.CV_8UC1);
+//    Core.rectangle(fsrc, new Point(finalPupil[0],finalPupil[1]), new Point(finalPupil[0]+2*finalPupil[2],finalPupil[1]+2*finalPupil[2]), new Scalar(0,255,0),2);
+//    Core.circle(fsrc, new Point(finalPupil[0], finalPupil[1]), (int) finalPupil[2], new Scalar(255,0,0),2);
+    
+    Core.circle(fsrc, new Point(finalPupil[0], finalPupil[1]), (int) finalPupil[2], new Scalar(255,255,255), Core.FILLED);
+//    Highgui.imwrite("detected-pupil.jpg", fsrc);
+
+    Mat dest = new Mat();
+    mat.copyTo(dest, fsrc);
+    
+    Mat destGray = new Mat();
+    Mat innerCircle = new Mat();
+    
+    Imgproc.cvtColor(dest, destGray, Imgproc.COLOR_BGR2GRAY);
+
+    Imshow circle1 = new Imshow("After Grey");
+    circle1.showImage(destGray);       
+    
+//    Imgproc.HoughCircles(gray, circles, Imgproc.CV_HOUGH_GRADIENT, 2.0, (gray.height()/4.0), 150.0, 20.0, (gray.height()/8), (gray.height()/2));
+    Imgproc.HoughCircles(destGray, innerCircle, Imgproc.CV_HOUGH_GRADIENT, 2.0, (destGray.height()/4.0), 150.0, 20.0, (destGray.height()/16), (destGray.height()/4));
+    double[] innerPupils = innerCircle.get(0, 0);
+    
+    dest.copyTo(innerCircle);
+    Core.circle(innerCircle, new Point(innerPupils[0], innerPupils[1]), (int) innerPupils[2], new Scalar(255,0,0), 2);
+    
+    Imshow circle2 = new Imshow("circles");
+    circle2.showImage(innerCircle);      
     
     log.info("Pupil found: x: {} y: {} r: {}", finalPupil[0], finalPupil[1], finalPupil[2]);
     //Crop eye mat and create pupil mat
