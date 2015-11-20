@@ -108,12 +108,6 @@ public class Eye {
     Imshow con = new Imshow("contours");
 //    con.showImage(gray);
     
-    
-//    Mat imgThreshold = new Mat();
-//    Imgproc.threshold(gray, imgThreshold, 0, 255, Imgproc.THRESH_BINARY_INV + Imgproc.THRESH_OTSU); 
-
-//    Imshow threshold = new Imshow("After Threshold");
-//    threshold.showImage(imgThreshold); 
     Imgproc.GaussianBlur(gray, gray, new Size(9,9), 2.0, 2.0);
     Imshow smooth = new Imshow("smooth");
 //    smooth.showImage(gray);
@@ -135,38 +129,22 @@ public class Eye {
     Mat fsrc = Mat.zeros(mat.rows(), mat.cols(), CvType.CV_8UC1);
     Core.circle(fsrc, new Point(finalPupil[0], finalPupil[1]), (int) finalPupil[2], new Scalar(255,0,0), -1);
     Imshow f = new Imshow("fsrc");
-    f.showImage(fsrc); 
-//    Core.circle(src, new Point(finalPupil[0], finalPupil[1]), (int) finalPupil[2], new Scalar(255,0,0), 2);
-    
-//    Imshow tmp = new Imshow("circles");
-//    tmp.showImage(fsrc);  
-//    Highgui.imwrite("detected-pupil.jpg", fsrc);
+//    f.showImage(fsrc); 
+
 
     Mat dest = new Mat();
     mat.copyTo(dest, fsrc);
     
     Imshow dest1 = new Imshow("dest1");
-    dest1.showImage(dest); 
     
     Mat destGray = new Mat();
     Mat innerCircle = new Mat();
     Imgproc.cvtColor(dest, destGray, Imgproc.COLOR_BGR2GRAY);
-//    Imgproc.HoughCircles(gray, circles, Imgproc.CV_HOUGH_GRADIENT, 2.0, (gray.height()/4.0), 150.0, 20.0, (gray.height()/8), (gray.height()/2));
     Imgproc.HoughCircles(destGray, innerCircle, Imgproc.CV_HOUGH_GRADIENT, 2.0, (destGray.height()/4.0), 150.0, 20.0, (destGray.height()/16), (destGray.height()/4));
     double[] innerPupils = innerCircle.get(0, 0);
     
     Core.circle(innerCircle, new Point(innerPupils[0], innerPupils[1]), (int) innerPupils[2], new Scalar(255,0,0), 2);
     dest.copyTo(innerCircle);
-    
-    Imshow tmp1 = new Imshow("dest2");
-    tmp1.showImage(dest); 
-    
-    Imshow tmp2 = new Imshow("Inner circle");
-    tmp2.showImage(innerCircle); 
-       	
-     
-//    Imshow circle2 = new Imshow("circles");
-//    circle2.showImage(innerCircle);      
     
     //======================> Logging pupils found <==============================
     
@@ -198,7 +176,6 @@ public class Eye {
       log.warn("Continuing with ({},{})", bottomRight.x, bottomRight.y);
     }
     Rect pupilArea = new Rect(topLeft, bottomRight);
-//    Mat pupilMat = new Mat(src, pupilArea);
     Mat pupilMat = new Mat(dest, pupilArea);
 
     photo.appendPupilX(finalPupil[0]);
