@@ -63,7 +63,8 @@ public class PhotoGridController implements Initializable,ControlledScreen{
   
   @FXML
   private void selectVerticalPicture(ActionEvent event) {
-    File file = fileChooser.showOpenDialog(root.getScene().getWindow());
+	  File file = new File(System.getProperty("user.dir")+"/src/main/resources/pics/Andrei_2.jpg");
+//    File file = fileChooser.showOpenDialog(root.getScene().getWindow());
     if (file!=null) {
       fileChooser.setInitialDirectory(file.getParentFile());
       vFilePath = file.getAbsolutePath();
@@ -73,7 +74,8 @@ public class PhotoGridController implements Initializable,ControlledScreen{
   
   @FXML
   private void selectHorizontalPicture(ActionEvent event) {    
-    File file = fileChooser.showOpenDialog(root.getScene().getWindow());
+	  File file = new File(System.getProperty("user.dir")+"/src/main/resources/pics/Andrei_2.jpg");
+//    File file = fileChooser.showOpenDialog(root.getScene().getWindow());
     if (file!=null) {
       fileChooser.setInitialDirectory(file.getParentFile());
       hFilePath = file.getAbsolutePath();

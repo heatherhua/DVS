@@ -16,6 +16,7 @@ import org.opencv.highgui.Highgui;
 import org.opencv.objdetect.CascadeClassifier;
 import org.opencv.objdetect.Objdetect;
 
+import com.atul.JavaOpenCV.Imshow;
 import com.ucsd.globalties.dvs.core.tools.Pair;
 
 /**
@@ -116,7 +117,12 @@ public class Photo {
     }
     eyes.sort(new EyeXCompare()); // simple sort to know which eye is left and which is right
     Mat leftEyeMat = new Mat(faceImage, eyes.get(0));
+    Imshow left = new Imshow("Left Eye");
+    left.showImage(leftEyeMat);
     Mat rightEyeMat = new Mat(faceImage, eyes.get(1));
+    Imshow right = new Imshow("Right Eye");
+    right.showImage(rightEyeMat);
+    
     log.info("created left eye mat: " + leftEyeMat);
     log.info("created right eye mat: " + rightEyeMat);
     return new Pair<Eye, Eye>(new Eye(this, leftEyeMat), new Eye(this, rightEyeMat));

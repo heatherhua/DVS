@@ -1,5 +1,8 @@
 package com.ucsd.globalties.dvs.core;
 
+
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Random;
 
 import lombok.Getter;
@@ -8,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
@@ -32,6 +36,8 @@ public class Eye {
   private Photo photo;
   
   private Pupil pupil;
+  
+  private final double CROP_RATIO = 1.1;
 
   /**
    * Create a new Eye object with the "parent" photo and the Mat that
@@ -68,75 +74,106 @@ public class Eye {
     int code = Math.abs((new Random()).nextInt());
     Mat src = new Mat();
     Mat gray = new Mat();
+    Mat invert = new Mat();
     Mat circles = new Mat();
     //make copy of eye mat so we do not modify it
     mat.copyTo(src);
+    
+    Imgproc.threshold(src, invert, 100, 255, Imgproc.THRESH_BINARY_INV);
+//    Imshow inverted = new Imshow("Inverted");
+//    inverted.showImage(invert);
+    
     //convert to grayscale since HoughCircles, and other algorithms, require this
-    Imgproc.cvtColor(src, gray, Imgproc.COLOR_BGR2GRAY);
+    Imgproc.cvtColor(invert, gray, Imgproc.COLOR_BGR2GRAY);
+//    Imshow invertedAndGray= new Imshow("Inverted and Grayed");
+//    invertedAndGray.showImage(gray);    
+    
+    
+    Imgproc.dilate(gray, gray, Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(5, 5)));
+    Imshow dilate = new Imshow("dilate");
+//    dilate.showImage(gray);
+    
+    Imgproc.erode(gray, gray, Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(3, 3)));
+    Imshow erode= new Imshow("dilate");
+//    erode.showImage(gray);
     //Imgproc.equalizeHist(gray,gray);
     //smooth out image to prevent false circles
-    Imgproc.GaussianBlur(gray, gray, new Size(9,9), 2.0, 2.0);
+//    Imgproc.GaussianBlur(gray, gray, new Size(9,9), 2.0, 2.0);
+//    Imshow blur= new Imshow("After Gaussian Blur");
+//    blur.showImage(gray);    
     
+    List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
+    Imgproc.findContours(gray.clone(), contours, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_NONE);
+    Imgproc.drawContours(gray, contours, -1, new Scalar(255, 255, 255));
+    Imshow con = new Imshow("contours");
+//    con.showImage(gray);
+    
+    
+//    Mat imgThreshold = new Mat();
+//    Imgproc.threshold(gray, imgThreshold, 0, 255, Imgproc.THRESH_BINARY_INV + Imgproc.THRESH_OTSU); 
+
+//    Imshow threshold = new Imshow("After Threshold");
+//    threshold.showImage(imgThreshold); 
+    Imgproc.GaussianBlur(gray, gray, new Size(9,9), 2.0, 2.0);
+    Imshow smooth = new Imshow("smooth");
+//    smooth.showImage(gray);
+    Imgproc.Canny(gray, gray, 150.0, 20.0);
+    Imshow canny = new Imshow("canny");
+//    canny.showImage(gray);
+ 
     //Finds circles
     //See http://docs.opencv.org/trunk/modules/imgproc/doc/feature_detection.html?highlight=cvhoughcircles#houghcircles
     //for parameter information
-    Imgproc.HoughCircles(gray, circles, Imgproc.CV_HOUGH_GRADIENT, 2.0, (gray.height()/4.0), 150.0, 20.0, (gray.height()/8), (gray.height()/2));
-    //if none found return null
-    if (circles.total() == 0) {
-      log.info("Pupil not found.");
-      return null;
-    }
-    
-    //iterate over all circles and output circles/rects for debugging
-    //for(int i = 0; i < circles.total(); i++ )
-    //{
-    //  circle info is stored as [x,y,radius] with [x,y] forming the center of the circle
-      //double[] circle = circles.get(0, i); 
-      //log.info("x: " + circle[0] + " y: " + circle[1] + " r: " + circle[2]);
-    //  Core.rectangle(src, new Point(circle[0],circle[1]), new Point(circle[0]+2*circle[2],circle[1]+2*circle[2]), new Scalar(0,255,0),2);
-      //Core.circle(src, new Point(circle[0], circle[1]), (int) circle[2], new Scalar(255,0,0),2);
-    //}
-    //Highgui.imwrite(""+code+"_pupil_src.jpg", src);
-    
-    //pick the most center circle as Pupil. HoughCircles returns circles in decreasing order from center
-    //if you suspect this is not the case, just sort the Mat using pythagorean theorem to get the distance from center of circle to center of eye image.
+    Imgproc.HoughCircles(gray, circles, Imgproc.CV_HOUGH_GRADIENT, 2.0, (gray.height()/4.0), 150.0, 20.0, (gray.height()/16), (gray.height()/4));
     double[] finalPupil = circles.get(0, 0);
+    if (circles.total() == 0) {
+    	log.info("Pupil not found.");
+    	return null;
+  	}
+    finalPupil[2] *= CROP_RATIO; // TODO: Change to final int constant 
     
-    // Use the following code to debug where the detected pupil is in the image
-//    Mat fsrc = new Mat();
-//    mat.copyTo(fsrc);    
     Mat fsrc = Mat.zeros(mat.rows(), mat.cols(), CvType.CV_8UC1);
-//    Core.rectangle(fsrc, new Point(finalPupil[0],finalPupil[1]), new Point(finalPupil[0]+2*finalPupil[2],finalPupil[1]+2*finalPupil[2]), new Scalar(0,255,0),2);
-//    Core.circle(fsrc, new Point(finalPupil[0], finalPupil[1]), (int) finalPupil[2], new Scalar(255,0,0),2);
+    Core.circle(fsrc, new Point(finalPupil[0], finalPupil[1]), (int) finalPupil[2], new Scalar(255,0,0), -1);
+    Imshow f = new Imshow("fsrc");
+    f.showImage(fsrc); 
+//    Core.circle(src, new Point(finalPupil[0], finalPupil[1]), (int) finalPupil[2], new Scalar(255,0,0), 2);
     
-    Core.circle(fsrc, new Point(finalPupil[0], finalPupil[1]), (int) finalPupil[2], new Scalar(255,255,255), Core.FILLED);
+//    Imshow tmp = new Imshow("circles");
+//    tmp.showImage(fsrc);  
 //    Highgui.imwrite("detected-pupil.jpg", fsrc);
 
     Mat dest = new Mat();
     mat.copyTo(dest, fsrc);
     
+    Imshow dest1 = new Imshow("dest1");
+    dest1.showImage(dest); 
+    
     Mat destGray = new Mat();
     Mat innerCircle = new Mat();
-    
     Imgproc.cvtColor(dest, destGray, Imgproc.COLOR_BGR2GRAY);
-
-    Imshow circle1 = new Imshow("After Grey");
-    circle1.showImage(destGray);       
-    
 //    Imgproc.HoughCircles(gray, circles, Imgproc.CV_HOUGH_GRADIENT, 2.0, (gray.height()/4.0), 150.0, 20.0, (gray.height()/8), (gray.height()/2));
     Imgproc.HoughCircles(destGray, innerCircle, Imgproc.CV_HOUGH_GRADIENT, 2.0, (destGray.height()/4.0), 150.0, 20.0, (destGray.height()/16), (destGray.height()/4));
     double[] innerPupils = innerCircle.get(0, 0);
     
-    dest.copyTo(innerCircle);
     Core.circle(innerCircle, new Point(innerPupils[0], innerPupils[1]), (int) innerPupils[2], new Scalar(255,0,0), 2);
+    dest.copyTo(innerCircle);
     
-    Imshow circle2 = new Imshow("circles");
-    circle2.showImage(innerCircle);      
+    Imshow tmp1 = new Imshow("dest2");
+    tmp1.showImage(dest); 
+    
+    Imshow tmp2 = new Imshow("Inner circle");
+    tmp2.showImage(innerCircle); 
+       	
+     
+//    Imshow circle2 = new Imshow("circles");
+//    circle2.showImage(innerCircle);      
+    
+    //======================> Logging pupils found <==============================
     
     log.info("Pupil found: x: {} y: {} r: {}", finalPupil[0], finalPupil[1], finalPupil[2]);
     //Crop eye mat and create pupil mat
-    Point topLeft = new Point(finalPupil[0]-finalPupil[2]/2,finalPupil[1]-finalPupil[2]/2);
-    Point bottomRight = new Point(finalPupil[0]+finalPupil[2]/2,finalPupil[1]+finalPupil[2]/2);
+    Point topLeft = new Point(finalPupil[0]-finalPupil[2],finalPupil[1]-finalPupil[2]);
+    Point bottomRight = new Point(finalPupil[0]+finalPupil[2],finalPupil[1]+finalPupil[2]);
     //check if top left point is negative and thus outside of image bounds and should be adjusted to be a valid point 
     //TODO do we even want these adjusted rects to be returned as pupils?
     if (topLeft.x < 0 || topLeft.y < 0) {
@@ -150,18 +187,20 @@ public class Eye {
       log.warn("Continuing with ({},{}).", topLeft.x, topLeft.y);
     }
     //check if bottom right point is larger than img size and thus should be adjusted
-    if (bottomRight.x > src.size().width || bottomRight.y > src.size().height) {
+    if (bottomRight.x > dest.size().width || bottomRight.y > dest.size().height) {
       log.warn("Bottom right point is out of image bounds ({},{}).", bottomRight.x, bottomRight.y); 
-      if (bottomRight.x > src.size().width) {
-        bottomRight.x = src.size().width;
+      if (bottomRight.x > dest.size().width) {
+        bottomRight.x = dest.size().width;
       }
-      if (bottomRight.y > src.size().height) {
-        bottomRight.y = src.size().height;
+      if (bottomRight.y > dest.size().height) {
+        bottomRight.y = dest.size().height;
       }
       log.warn("Continuing with ({},{})", bottomRight.x, bottomRight.y);
     }
     Rect pupilArea = new Rect(topLeft, bottomRight);
-    Mat pupilMat = new Mat(src, pupilArea);
+//    Mat pupilMat = new Mat(src, pupilArea);
+    Mat pupilMat = new Mat(dest, pupilArea);
+
     photo.appendPupilX(finalPupil[0]);
     return new Pupil(this, pupilMat);
   }
